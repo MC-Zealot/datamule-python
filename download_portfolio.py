@@ -30,7 +30,7 @@ def download_and_save_filings(filing_date=('2023-01-01', '2023-01-03'), submissi
     os.makedirs('data', exist_ok=True)
 
     # Create a Portfolio object
-    portfolio = Portfolio('output_dir/'+str(cik))  # Can be an existing or new directory
+    portfolio = Portfolio('output_dir/'+str(cik)+"_"+str(company_ticker))  # Can be an existing or new directory
 
     # Download submissions based on given date range and submission type
     portfolio.download_submissions(
@@ -40,16 +40,20 @@ def download_and_save_filings(filing_date=('2023-01-01', '2023-01-03'), submissi
     )
 
     # Define output file path
-    output_file = f'data/result_{submission_type}_{cik}_{company_ticker}.json'
+
 
     # Open the output file and write parsed data
-    with open(output_file, 'w', encoding='utf-8') as f:
-        for doc in portfolio.document_type(submission_type):
+
+    for doc in portfolio.document_type(submission_type):
+        filing_date = doc.filing_date
+        os.makedirs(f'data/result_{submission_type}_{cik}_{company_ticker}', exist_ok=True)
+        output_file = f'data/result_{submission_type}_{cik}_{company_ticker}/{filing_date}.json'
+        with open(output_file, 'w', encoding='utf-8') as f:
             try:
                 doc.parse()
                 # content = doc.data['document']['partii']['item7']
                 content = str(doc.data)
-                print(print(doc.filing_date))
+                # print()
                 # print(content)
                 f.write(content + "\n\n")
             except Exception as e:
