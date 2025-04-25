@@ -30,7 +30,7 @@ def download_and_save_filings(filing_date=('2023-01-01', '2023-01-03'), submissi
     os.makedirs('data', exist_ok=True)
 
     # Create a Portfolio object
-    portfolio = Portfolio('output_dir')  # Can be an existing or new directory
+    portfolio = Portfolio('output_dir/'+str(cik))  # Can be an existing or new directory
 
     # Download submissions based on given date range and submission type
     portfolio.download_submissions(
@@ -49,6 +49,7 @@ def download_and_save_filings(filing_date=('2023-01-01', '2023-01-03'), submissi
                 doc.parse()
                 # content = doc.data['document']['partii']['item7']
                 content = str(doc.data)
+                print(print(doc.filing_date))
                 # print(content)
                 f.write(content + "\n\n")
             except Exception as e:
@@ -103,4 +104,4 @@ if __name__ == '__main__':
             company_ticker=company_name
         )
         index += 1
-        if index == 5: break
+        if index == 3: break

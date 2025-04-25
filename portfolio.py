@@ -3,19 +3,23 @@
 from datamule import Portfolio
 
 # Create a Portfolio object
-portfolio = Portfolio('output_dir') # can be an existing directory or a new one
+portfolio = Portfolio('APPL10K') # can be an existing directory or a new one
 
 # Download submissions
 portfolio.download_submissions(
-   filing_date=('2023-01-01','2023-01-03'),
    submission_type=['10-K'],
+    # cik='320193',
+    ticker='AAPL'
 )
 
 # Iterate through documents by document type
+print(type(portfolio.document_type('10-K')))
 for ten_k in portfolio.document_type('10-K'):
    ten_k.parse()
-   print(ten_k.data['document']['partii']['item7'])
-   # print(ten_k.data['document'])
+   data = ten_k.data
+   # print(ten_k.data['document']['partii']['item7'])
+   print(ten_k.filing_date)
+   print(ten_k.data['document'])
 
 
 # 打开输出文件
