@@ -4,11 +4,13 @@ import os
 from datamule import Portfolio
 import requests
 import json
-
+from difflib import get_close_matches
+import pandas as pd
 
 SEC_HEADERS = {
     "User-Agent": "Individual/tyzttzzz@gmail.com"  # Required to avoid being blocked
 }
+
 
 # Fetch and store CIK-Ticker mapping
 def get_cik_mapping():
@@ -22,8 +24,8 @@ def get_cik_mapping():
         raise Exception(f"Failed to fetch CIK mapping. Status code: {response.status_code}")
 
 
-
-def download_and_save_filings(filing_date=('2023-01-01', '2023-01-03'), submission_type='10-K',cik = '', company_ticker='None'):
+def download_and_save_filings(filing_date=('2023-01-01', '2023-01-03'), submission_type='10-K', cik='',
+                              company_ticker='None'):
     # Ensure the output directory exists
     os.makedirs('data', exist_ok=True)
 
@@ -52,18 +54,56 @@ def download_and_save_filings(filing_date=('2023-01-01', '2023-01-03'), submissi
             except Exception as e:
                 print(f"Failed to parse document: {e}")
 
+
 cik_mapping = get_cik_mapping()
+keys = cik_mapping.keys()
+
+
+def get_cik_from_redis(company_name):
+    """
+    Searches Redis for a fuzzy and case-insensitive match and returns the CIK number.
+    """
+    if not company_name:
+        return None  # Ensure input is valid
+
+    company_name = company_name.strip().lower()
+
+    # Fetch all keys from Redis (Company Names)
+    normalized_keys = {key.strip().lower(): cik_mapping[key] for key in keys}  # Store original names for lookup
+
+    # Use fuzzy matching to find the closest match
+    closest_match = get_close_matches(company_name, normalized_keys.keys(), n=1, cutoff=0.6)
+
+    if closest_match:
+        best_match_cik = normalized_keys[closest_match[0]]  # Get the original stored key
+        return closest_match[0], best_match_cik  # Return the corresponding CIK
+
+    return None, None
+
+
 # Example usage
 if __name__ == '__main__':
+    df = pd.read_csv("apollo-contacts-export.csv")
+
+    company_list = df["Company"].dropna().unique().tolist()
     index = 0
-    for key in cik_mapping:
-        company_ticker=key
-        cik = cik_mapping[key]
+    for company_name in company_list:
+        closest_match, cik = get_cik_from_redis(company_name)
+
+        if cik is None:
+            print("not find cik: ", company_name)
+            continue
+
+        print(closest_match)
+        print(company_name)
+        print(cik)
+        exit(0)
+
         download_and_save_filings(
             # filing_date=('2023-01-01', '2023-01-02'),
             submission_type='10-K',
             cik=cik,
             company_ticker=company_ticker
         )
-        index+=1
-        if index==5: break
+        index += 1
+        if index == 5: break
