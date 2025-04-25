@@ -94,16 +94,13 @@ if __name__ == '__main__':
             print("not find cik: ", company_name)
             continue
 
-        print(closest_match)
-        print(company_name)
-        print(cik)
-        exit(0)
+        print("matched: ",[closest_match, company_name, cik])
 
         download_and_save_filings(
             # filing_date=('2023-01-01', '2023-01-02'),
             submission_type='10-K',
             cik=cik,
-            company_ticker=company_ticker
+            company_ticker=company_name
         )
         index += 1
         if index == 5: break
