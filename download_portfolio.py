@@ -52,10 +52,11 @@ def download_and_save_filings(filing_date=('2023-01-01', '2023-01-03'), submissi
             try:
                 doc.parse()
                 # content = doc.data['document']['partii']['item7']
-                content = str(doc.data)
+                json_string = json.dumps(doc.data, ensure_ascii=False, indent=4)
+                # content = str(doc.data)
                 # print()
                 # print(content)
-                f.write(content + "\n\n")
+                f.write(json_string + "\n\n")
             except Exception as e:
                 print(f"Failed to parse document: {e}")
 
@@ -108,4 +109,4 @@ if __name__ == '__main__':
             company_ticker=company_name
         )
         index += 1
-        if index == 3: break
+        if index == 1: break
