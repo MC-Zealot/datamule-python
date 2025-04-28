@@ -8,8 +8,7 @@ import pandas as pd
 from difflib import get_close_matches
 from datamule import Portfolio
 import time
-
-
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 # Global constants
@@ -18,7 +17,8 @@ SEC_HEADERS = {
 }
 SEC_CIK_MAPPING_URL = "https://www.sec.gov/files/company_tickers.json"
 LIST1_CSV_FILE_PATH = "apollo-contacts-export.csv"
-output_dir_base = "/Users/zealot/Documents/SECv2"
+output_dir_base = "/Users/zealot/Documents/SECv3"
+MAX_WORKERS = 9
 
 
 def fetch_cik_mapping() -> dict:
@@ -49,12 +49,12 @@ def find_closest_cik(company_name: str, cik_mapping: dict) -> tuple:
     return None, None
 
 
-def download_sec_filings(cik: str, company_name: str, submission_type: str = "10-K"):
-    """Download and save SEC filings for a given CIK and company name."""
-    output_dir = f"{output_dir_base}/output/result_{submission_type}_{cik}_{company_name}"
+def download_sec_filings(cik: str, company_ticker: str, submission_type: str = "10-K"):
+    """Download and save SEC filings for a given CIK and company ticker."""
+    output_dir = f"{output_dir_base}/output/result_{submission_type}_{cik}_{company_ticker}"
     print("output_dir: ", output_dir)
     os.makedirs(output_dir, exist_ok=True)
-    portfolio_path=f"{output_dir_base}/output_dir/{cik}_{company_name}"
+    portfolio_path=f"{output_dir_base}/output_dir/{cik}_{company_ticker}"
     print("portfolio_path: ", portfolio_path)
     portfolio = Portfolio(portfolio_path)
     portfolio.download_submissions(submission_type=[submission_type], cik=cik)
@@ -71,7 +71,7 @@ def download_sec_filings(cik: str, company_name: str, submission_type: str = "10
             print(f"Failed to parse document for CIK {cik}: {e}")
 
 
-def main(csv_path: str, max_downloads: int = 1):
+def main_(csv_path: str, max_downloads: int = 1):
     """Main execution flow."""
     cik_mapping = fetch_cik_mapping()
     list1_df = pd.read_csv(csv_path)
@@ -85,12 +85,41 @@ def main(csv_path: str, max_downloads: int = 1):
             continue
 
         print(f"Matched: Closest: {closest_match} | Original: {company_name} | CIK: {cik}")
-        download_sec_filings(cik, company_name+"_"+closest_match)
+        download_sec_filings(cik, company_name + "_" + closest_match)
+        # download_sec_filings(cik, company_name)
 
         download_count += 1
         if download_count >= max_downloads:
             break
 
+
+def main(csv_path: str, max_downloads: int = 1):
+    cik_mapping = fetch_cik_mapping()
+    list1_df = pd.read_csv(csv_path)
+    company_list = list1_df["Company"].dropna().unique().tolist()
+
+    download_tasks = []
+    download_count = 0
+    with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:  # ✅ 使用多进程
+        for company_name in company_list:
+            if download_count >= max_downloads:
+                break
+
+            closest_match, cik = find_closest_cik(company_name, cik_mapping)
+            if cik is None:
+                print(f"Not found CIK: {company_name}")
+                continue
+
+            print(f"Matched: Closest: {closest_match} | Original: {company_name} | CIK: {cik}")
+            future = executor.submit(download_sec_filings, cik, company_name + "_" + closest_match)
+            download_tasks.append(future)
+            download_count += 1
+
+        for future in as_completed(download_tasks):
+            try:
+                future.result()
+            except Exception as e:
+                print(f"Download failed with exception: {e}")
 def format_time(seconds):
     # 计算小时、分钟、秒
     hours = seconds // 3600
