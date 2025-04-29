@@ -71,28 +71,6 @@ def download_sec_filings(cik: str, company_ticker: str, submission_type: str = "
             print(f"Failed to parse document for CIK {cik}: {e}")
 
 
-def main_(csv_path: str, max_downloads: int = 1):
-    """Main execution flow."""
-    cik_mapping = fetch_cik_mapping()
-    list1_df = pd.read_csv(csv_path)
-    company_list = list1_df["Company"].dropna().unique().tolist()
-
-    download_count = 0
-    for company_name in company_list:
-        closest_match, cik = find_closest_cik(company_name, cik_mapping)
-        if cik is None:
-            print(f"Not found CIK: {company_name}")
-            continue
-
-        print(f"Matched: Closest: {closest_match} | Original: {company_name} | CIK: {cik}")
-        # download_sec_filings(cik, company_name + "_" + closest_match)
-        # download_sec_filings(cik, company_name)
-
-        download_count += 1
-        if download_count >= max_downloads:
-            break
-
-
 def main(csv_path: str, max_downloads: int = 1):
     cik_mapping = fetch_cik_mapping()
     list1_df = pd.read_csv(csv_path)
