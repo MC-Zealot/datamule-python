@@ -103,10 +103,10 @@ if __name__ == '__main__':
         print("matched: ",[closest_match, company_name, cik])
 
         download_and_save_filings(
-            # filing_date=('2023-01-01', '2023-01-02'),
-            submission_type='10-K',
-            cik=cik,
-            company_ticker=company_name
+            filing_date=('2024-01-01','2024-03-31'),
+            submission_type='13F-HR'
+            # cik=cik,
+            # company_ticker=company_name
         )
         index += 1
         if index == 1: break

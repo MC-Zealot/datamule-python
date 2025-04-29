@@ -17,9 +17,9 @@ SEC_HEADERS = {
 }
 SEC_CIK_MAPPING_URL = "https://www.sec.gov/files/company_tickers.json"
 LIST1_CSV_FILE_PATH = "apollo-contacts-export.csv"
-output_dir_base = "/Users/zealot/Documents/SECv4"
+output_dir_base = "/Users/zealot/Documents/SEC_8K"
 MAX_WORKERS = 1
-
+MAX_DOWNLOADS = 10
 
 def fetch_cik_mapping() -> dict:
     """Fetch CIK-ticker mapping from SEC."""
@@ -58,6 +58,7 @@ def download_sec_filings(cik: str, company_ticker: str, submission_type: str = "
     print("portfolio_path: ", portfolio_path)
     portfolio = Portfolio(portfolio_path)
     portfolio.download_submissions(submission_type=[submission_type], cik=cik)
+    # portfolio.download_submissions(submission_type=[submission_type])
 
     for doc in portfolio.document_type(submission_type):
         try:
@@ -91,8 +92,9 @@ def main(csv_path: str, max_downloads: int = 1):
             print(f"Matched: Closest: {closest_match} | Original: {company_name} | CIK: {cik}")
             submission_type = "10-K"
             submission_type = "8-K"
-            # submission_type = "13F"
-            submission_type = "adv"
+            submission_type = "D"
+            # submission_type = "13F-HR"
+            # submission_type = "ADV"
             future = executor.submit(download_sec_filings, cik, company_name + "_" + closest_match, submission_type)
             download_tasks.append(future)
             download_count += 1
@@ -110,8 +112,8 @@ def format_time(seconds):
 
 if __name__ == '__main__':
     start_time = time.time()
-    max_downloads = 1
-    main(LIST1_CSV_FILE_PATH, max_downloads)
+
+    main(LIST1_CSV_FILE_PATH, MAX_DOWNLOADS)
     end_time = time.time()
     elapsed_time = end_time - start_time
     formatted_time = format_time(elapsed_time)
