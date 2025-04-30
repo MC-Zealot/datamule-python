@@ -19,7 +19,7 @@ import uuid
 
 
 # Set your OpenAI API key
-openai.api_key = "your_openai_api_key"  # 替换为你的实际 API Key
+openai.api_key = "your_openai_api_key"
 # Global constants
 SEC_HEADERS = {
     "User-Agent": "Individual/tyzttzzz@gmail.com"  # Required to avoid being blocked
