@@ -74,11 +74,11 @@ def call_chatgpt(prompt: str, model: str = "gpt-3.5-turbo", temperature: float =
 
 
 def categorize_job_title(job_title):
-    executive_titles = ["CEO", "Managing Partner", "Chairman"]
+    executive_titles = ["CEO", "Managing Partner", "Chairman","Chief Executive Officer"]
     investor_titles = ["Investor", "LP", "GP", "Fund Manager"]
 
     doc = nlp(job_title.lower())
-    if any(word in doc.text for word in executive_titles):
+    if any(word.lower() in doc.text for word in executive_titles):
         return "Executive"
     elif any(word in doc.text for word in investor_titles):
         return "Investor"
@@ -136,7 +136,7 @@ for index, row in apollo_lead_df.iterrows():
     random_uuid = uuid.uuid4()
     first_name = row['First Name']
     last_name = row['Last Name']
-    full_name = first_name + " " + last_name
+    full_name = str(first_name) + " " + str(first_name)
     title = row['Title']
     job_title_category = categorize_job_title(title)
     company = row['Company']
@@ -149,9 +149,12 @@ for index, row in apollo_lead_df.iterrows():
     company_linkedin_url = row['Company Linkedin Url']
     home_phone = row['Home Phone']
     mobile_phone = row['Mobile Phone']
+    phone_number = row['Corporate Phone']
 
     prompt = f"Give a one-line description of the company named '{company}'."
-    gpt_summary = call_chatgpt(prompt)
+    print("job_title_category: ", job_title_category)
+    print("company_domain: ", company_domain)
+    # gpt_summary = call_chatgpt(prompt)
 
     # email_status = row['Email Status']
     # primary_email_source = row['Primary Email Source']

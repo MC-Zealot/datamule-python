@@ -39,6 +39,7 @@ Basic Installation
 .. code-block:: bash
 
     pip install datamule
+    python -m spacy download en_core_web_sm
 
 Basic Usage
 ~~~~~~~~~~~
