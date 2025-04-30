@@ -9,10 +9,14 @@ from difflib import get_close_matches
 import openai
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
+import spacy
 import pandas as pd
 pd.set_option('display.max_colwidth', 30)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 2000)
+import uuid
+
+
 
 # Set your OpenAI API key
 openai.api_key = "your_openai_api_key"  # 替换为你的实际 API Key
@@ -20,6 +24,7 @@ openai.api_key = "your_openai_api_key"  # 替换为你的实际 API Key
 SEC_HEADERS = {
     "User-Agent": "Individual/tyzttzzz@gmail.com"  # Required to avoid being blocked
 }
+nlp = spacy.load("en_core_web_sm")
 SEC_CIK_MAPPING_URL = "https://www.sec.gov/files/company_tickers.json"
 LIST1_CSV_FILE_PATH = "apollo-contacts-export.csv"
 output_dir_base = "/Users/zealot/Documents/SEC_8K"
@@ -76,8 +81,10 @@ print("Data read from CSV:")
 print(apollo_lead_df.head())  # Print only the first 5 rows to quickly check the content
 
 for index, row in apollo_lead_df.iterrows():
+    random_uuid = uuid.uuid4()
     first_name = row['First Name']
     last_name = row['Last Name']
+    full_name = first_name + " " + last_name
     title = row['Title']
     company = row['Company']
     company_email_name = row['Company Name for Emails']
