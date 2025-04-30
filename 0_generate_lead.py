@@ -15,7 +15,7 @@ pd.set_option('display.max_colwidth', 30)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 2000)
 import uuid
-
+from urllib.parse import urlparse
 
 
 # Set your OpenAI API key
@@ -72,6 +72,58 @@ def call_chatgpt(prompt: str, model: str = "gpt-3.5-turbo", temperature: float =
     except Exception as e:
         return f"[Error] {e}"
 
+
+def categorize_job_title(job_title):
+    executive_titles = ["CEO", "Managing Partner", "Chairman"]
+    investor_titles = ["Investor", "LP", "GP", "Fund Manager"]
+
+    doc = nlp(job_title.lower())
+    if any(word in doc.text for word in executive_titles):
+        return "Executive"
+    elif any(word in doc.text for word in investor_titles):
+        return "Investor"
+    return "Other"
+
+
+def extract_company_domain(url: str) -> str:
+    """
+    Extract the clean company domain from a given website URL.
+    Removes protocol (http/https) and 'www.' prefix.
+
+    Example:
+    Input:  'http://www.example.com'
+    Output: 'example.com'
+    """
+    try:
+        # Extract domain part (e.g., 'www.example.com')
+        netloc = urlparse(url).netloc
+
+        # Convert to lowercase and remove 'www.' prefix if present
+        domain = netloc.lower().replace("www.", "")
+
+        return domain
+    except Exception as e:
+        # Handle invalid URLs gracefully
+        print(f"Error parsing URL '{url}': {e}")
+        return ""
+
+
+def extract_geographic_focus(sec_10k_text):
+    """Extracts geographic investment allocation from SEC 10-K filings."""
+    focus_areas = {"North America": 0, "Europe": 0, "Asia": 0, "Global": 0}
+
+    if "north america" in sec_10k_text.lower():
+        focus_areas["North America"] = 70
+    if "europe" in sec_10k_text.lower():
+        focus_areas["Europe"] = 30
+    if "asia" in sec_10k_text.lower():
+        focus_areas["Asia"] = 10
+    if "global" in sec_10k_text.lower():
+        focus_areas["Global"] = 100
+
+    return json.dumps({k: f"{v}%" for k, v in focus_areas.items() if v > 0})
+
+
 # Step 1: Read the CSV file
 csv_file_path = 'apollo-contacts-export.csv'
 apollo_lead_df = pd.read_csv(csv_file_path)
@@ -86,10 +138,13 @@ for index, row in apollo_lead_df.iterrows():
     last_name = row['Last Name']
     full_name = first_name + " " + last_name
     title = row['Title']
+    job_title_category = categorize_job_title(title)
     company = row['Company']
+    website = row['Website']
+    company_domain = extract_company_domain(website)
     company_email_name = row['Company Name for Emails']
     email = row['Email']
-    website = row['Website']
+
     person_linkedin_url = row['Person Linkedin Url']
     company_linkedin_url = row['Company Linkedin Url']
     home_phone = row['Home Phone']
