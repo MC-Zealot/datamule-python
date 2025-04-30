@@ -2,18 +2,3 @@
 __pycache__/
 build/
 dist/
-*.egg-info/
-
-# Environment and secrets
-*.venv
-*.env
-Secrets/
-
-# Data directories
-*filings/
-*data/
-
-# CSV files
-*.csv
-!*company_tickers.csv
-
