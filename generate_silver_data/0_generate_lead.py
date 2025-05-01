@@ -130,7 +130,7 @@ for index, row in apollo_lead_df.iterrows():
         continue
 
     print(f"Matched: Closest: {closest_match} | Original: {company_name} | CIK: {cik}")
-
+    # get form d
     # gpt_summary = call_chatgpt(prompt)
 
     # email_status = row['Email Status']

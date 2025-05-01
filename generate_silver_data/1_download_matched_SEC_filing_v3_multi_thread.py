@@ -9,6 +9,7 @@ from difflib import get_close_matches
 from datamule import Portfolio
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
+import utils as ut
 
 
 # Global constants
@@ -16,37 +17,10 @@ SEC_HEADERS = {
     "User-Agent": "Individual/tyzttzzz@gmail.com"  # Required to avoid being blocked
 }
 SEC_CIK_MAPPING_URL = "https://www.sec.gov/files/company_tickers.json"
-LIST1_CSV_FILE_PATH = "apollo-contacts-export.csv"
-output_dir_base = "/Users/zealot/Documents/SEC_8K"
-MAX_WORKERS = 1
-MAX_DOWNLOADS = 10
-
-def fetch_cik_mapping() -> dict:
-    """Fetch CIK-ticker mapping from SEC."""
-    response = requests.get(SEC_CIK_MAPPING_URL, headers=SEC_HEADERS)
-    if response.status_code == 200:
-        cik_data = response.json()
-        # cik_mapping = {entry["ticker"].upper(): str(entry["cik_str"]).zfill(10) for entry in cik_data.values()}
-        cik_mapping = {entry["title"].upper(): str(entry["cik_str"]) for entry in cik_data.values()}
-        return cik_mapping
-    else:
-        raise Exception(f"Failed to fetch CIK mapping. Status code: {response.status_code}")
-
-
-def find_closest_cik(company_name: str, cik_mapping: dict) -> tuple:
-    """Find the closest matching CIK using fuzzy matching."""
-    if not company_name:
-        return None, None
-
-    normalized_mapping = {key.strip().lower(): cik for key, cik in cik_mapping.items()}
-    company_name_lower = company_name.strip().lower()
-    closest_matches = get_close_matches(company_name_lower, normalized_mapping.keys(), n=1, cutoff=0.6)
-
-    if closest_matches:
-        matched_name = closest_matches[0]
-        return matched_name, normalized_mapping[matched_name]
-
-    return None, None
+LIST1_CSV_FILE_PATH = "generate_silver_data/apollo-contacts-export.csv"
+output_dir_base = "/Users/zealot/Documents/SEC_D"
+MAX_WORKERS = 6
+MAX_DOWNLOADS = 1000
 
 
 def download_sec_filings(cik: str, company_ticker: str, submission_type: str = "10-K"):
@@ -73,7 +47,7 @@ def download_sec_filings(cik: str, company_ticker: str, submission_type: str = "
 
 
 def main(csv_path: str, max_downloads: int = 1):
-    cik_mapping = fetch_cik_mapping()
+    cik_mapping = ut.fetch_cik_mapping()
     list1_df = pd.read_csv(csv_path)
     company_list = list1_df["Company"].dropna().unique().tolist()
 
@@ -84,7 +58,7 @@ def main(csv_path: str, max_downloads: int = 1):
             if download_count >= max_downloads:
                 break
 
-            closest_match, cik = find_closest_cik(company_name, cik_mapping)
+            closest_match, cik = ut.find_closest_cik(company_name, cik_mapping)
             if cik is None:
                 print(f"Not found CIK: {company_name}")
                 continue
