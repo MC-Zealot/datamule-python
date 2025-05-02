@@ -52,9 +52,7 @@ def download_sec_filings(cik: str, company_ticker: str, submission_type: str = "
             print(f"Failed to parse document for CIK {cik}: {e}")
 
 
-def download_sec_filings_13f(submission_type: str = "10-K", filing_date=('2023-01-01', '2023-01-03')):
-    if isinstance(submission_type, str):
-        submission_type = [submission_type]  # transform to list
+def download_sec_filings_13f(submission_type: str = "10-K", filing_date=('2024-01-01', '2024-03-31')):
 
     date_range_str = f"{filing_date[0]}_to_{filing_date[1]}"
     output_dir = f"{output_dir_base}/output/result_{submission_type}_{date_range_str}"
@@ -67,7 +65,7 @@ def download_sec_filings_13f(submission_type: str = "10-K", filing_date=('2023-0
     portfolio = Portfolio(portfolio_path)
 
     # download sec data
-    portfolio.download_submissions(submission_type=[submission_type], filing_date=filing_date)
+    portfolio.download_submissions(submission_type=submission_type, filing_date=filing_date)
 
     for doc in portfolio.document_type(submission_type):
         try:
@@ -132,7 +130,7 @@ def main(csv_path: str, max_downloads: int = 1):
 
     with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
         if '13F-HR' in submission_type:
-            future = executor.submit(download_sec_filings_v2, submission_type)
+            future = executor.submit(download_sec_filings_13f(), '13F-HR')
             download_tasks.append(future)
         else:
             for company_name in company_list:
