@@ -53,7 +53,8 @@ def download_sec_filings(cik: str, company_ticker: str, submission_type: str = "
 
 
 def download_sec_filings_13f(submission_type, filing_date=('2024-01-01', '2024-03-31')):
-
+    if isinstance(submission_type, list):
+        submission_type = submission_type[0]  # transform to list
     date_range_str = f"{filing_date[0]}_to_{filing_date[1]}"
     output_dir = f"{output_dir_base}/output/result_{submission_type}_{date_range_str}"
     print("output_dir:", output_dir)
