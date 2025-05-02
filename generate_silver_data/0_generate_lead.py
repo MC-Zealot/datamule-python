@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: UTF-8 -*-
 
 import os
 import json
@@ -22,9 +21,6 @@ import xml.etree.ElementTree as ET
 import re
 
 nlp = spacy.load("en_core_web_sm")
-MAX_WORKERS = 1
-MAX_DOWNLOADS = 10
-
 
 
 def categorize_job_title(job_title):
@@ -117,9 +113,7 @@ def get_value_for_issuer(xml_string: str, issuer_name: str = "APPLE INC") -> str
 
     return None
 
-portfolio_path_13F_HR_path = "/Users/zealot/Documents/SEC_13F-HR/portfolio_output_dir"
 
-portfolio = Portfolio(portfolio_path_13F_HR_path)
 
 
 def sum_issuer_value(text_query: str) -> int:
@@ -135,10 +129,11 @@ def sum_issuer_value(text_query: str) -> int:
     """
 
     def callback_function(document):
-        # try:
-        if document.contains_string(text_query):
-            return document.content
-        # except Exception as e:
+        try:
+            if document.contains_string(text_query):
+                return document.content
+        except Exception as e:
+            pass
         #     print(f"Error processing document: {e}")
         return None
 
@@ -159,36 +154,15 @@ def sum_issuer_value(text_query: str) -> int:
             pass
             # print(f"[{i}] Error processing item: {e}")
 
-    return total
+    # Convert an integer to a string in billions with specified decimal places
+    billion_value = total / 1_000_000_000
+    ret = round(billion_value, 4)
+    return ret
 
 
 def clean_string(text):
     # Remove all characters except letters, numbers, and spaces
     return re.sub(r'[^a-zA-Z0-9 ]', '', text)
-
-# def callback_function(document):
-#     try:
-#         if document.contains_string(text_query):
-#             return document.content
-#     except Exception as e:
-#         print(f"Error processing document: {e}")
-#
-# # Process submissions - note that filters are applied here
-# ret = portfolio.process_documents(callback=callback_function)
-# filtered_ret = [item for item in ret if item is not None]
-#
-# print(len(filtered_ret))
-
-# sum=0
-# for i, item in enumerate(filtered_ret):
-#     if item is not None:
-#         try:
-#             value = get_value_for_issuer(item, issuer_name="APPLE INC")
-#             if value is not None:
-#                 sum+= int(value)
-#                 print(f"[{i}] Value for APPLE INC:", value)
-#         except Exception as e:
-#             print(f"[{i}] Error processing item: {e}")
 
 
 # Step 1: Read the CSV file
@@ -198,6 +172,7 @@ cik_mapping = ut.fetch_cik_mapping()
 # Step 2: Display the loaded data
 print("Data read from CSV:")
 print(apollo_lead_df.head())  # Print only the first 5 rows to quickly check the content
+
 
 portfolio_path_13F_HR_path = "/Users/zealot/Documents/SEC_13F-HR/portfolio_output_dir"
 portfolio = Portfolio(portfolio_path_13F_HR_path)
@@ -236,7 +211,7 @@ for index, row in apollo_lead_df.iterrows():
         continue
 
     print(f"Matched: Closest: {closest_match} | Original: {company_name} | CIK: {cik}")
-    clean_company_name = clean_string(closest_match)
+    clean_company_name = clean_string(closest_match).upper()
     aum = sum_issuer_value(clean_company_name)
 
     records.append({
@@ -260,58 +235,8 @@ for index, row in apollo_lead_df.iterrows():
 df = pd.DataFrame(records)
 
 # Show the result
-print(df.head())
+print(df)
+df.to_csv("full_output.csv", index=False)
     # get form d
     # gpt_summary = call_chatgpt(prompt)
 
-    # email_status = row['Email Status']
-    # primary_email_source = row['Primary Email Source']
-    # email_confidence = row['Email Confidence']
-    # primary_email_catch_all_status = row['Primary Email Catch-all Status']
-    # primary_email_last_verified_at = row['Primary Email Last Verified At']
-    # seniority = row['Seniority']
-    # departments = row['Departments']
-    # contact_owner = row['Contact Owner']
-    # work_direct_phone = row['Work Direct Phone']
-    # corporate_phone = row['Corporate Phone']
-    # other_phone = row['Other Phone']
-    # stage = row['Stage']
-    # lists = row['Lists']
-    # last_contacted = row['Last Contacted']
-    # account_owner = row['Account Owner']
-    # num_employees = row['# Employees']
-    # industry = row['Industry']
-    # keywords = row['Keywords']
-    # facebook_url = row['Facebook Url']
-    # twitter_url = row['Twitter Url']
-    # city = row['City']
-    # state = row['State']
-    # country = row['Country']
-    # company_address = row['Company Address']
-    # company_city = row['Company City']
-    # company_state = row['Company State']
-    # company_country = row['Company Country']
-    # company_phone = row['Company Phone']
-    # seo_description = row['SEO Description']
-    # technologies = row['Technologies']
-    # annual_revenue = row['Annual Revenue']
-    # total_funding = row['Total Funding']
-    # latest_funding = row['Latest Funding']
-    # latest_funding_amount = row['Latest Funding Amount']
-    # last_raised_at = row['Last Raised At']
-    # email_sent = row['Email Sent']
-    # email_open = row['Email Open']
-    # email_bounced = row['Email Bounced']
-    # replied = row['Replied']
-    # demoed = row['Demoed']
-    # num_retail_locations = row['Number of Retail Locations']
-    # apollo_contact_id = row['Apollo Contact Id']
-    # apollo_account_id = row['Apollo Account Id']
-    # secondary_email = row['Secondary Email']
-    # secondary_email_source = row['Secondary Email Source']
-    # tertiary_email = row['Tertiary Email']
-    # tertiary_email_source = row['Tertiary Email Source']
-    # primary_intent_topic = row['Primary Intent Topic']
-    # primary_intent_score = row['Primary Intent Score']
-    # secondary_intent_topic = row['Secondary Intent Topic']
-    # secondary_intent_score = row['Secondary Intent Score']
