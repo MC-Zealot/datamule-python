@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 import utils as ut
 from datamule import Portfolio, Config
 import xml.etree.ElementTree as ET
+import re
 
 nlp = spacy.load("en_core_web_sm")
 MAX_WORKERS = 1
@@ -134,11 +135,11 @@ def sum_issuer_value(text_query: str) -> int:
     """
 
     def callback_function(document):
-        try:
-            if document.contains_string(text_query):
-                return document.content
-        except Exception as e:
-            print(f"Error processing document: {e}")
+        # try:
+        if document.contains_string(text_query):
+            return document.content
+        # except Exception as e:
+        #     print(f"Error processing document: {e}")
         return None
 
     # Run the document processing with the callback
@@ -155,12 +156,15 @@ def sum_issuer_value(text_query: str) -> int:
                 total += int(value)
                 # print(f"[{i}] Value for {text_query}:", value)
         except Exception as e:
-            print(f"[{i}] Error processing item: {e}")
+            pass
+            # print(f"[{i}] Error processing item: {e}")
 
     return total
 
 
-
+def clean_string(text):
+    # Remove all characters except letters, numbers, and spaces
+    return re.sub(r'[^a-zA-Z0-9 ]', '', text)
 
 # def callback_function(document):
 #     try:
@@ -195,8 +199,7 @@ cik_mapping = ut.fetch_cik_mapping()
 print("Data read from CSV:")
 print(apollo_lead_df.head())  # Print only the first 5 rows to quickly check the content
 
-portfolio_path_13F_HR_path = ""
-
+portfolio_path_13F_HR_path = "/Users/zealot/Documents/SEC_13F-HR/portfolio_output_dir"
 portfolio = Portfolio(portfolio_path_13F_HR_path)
 # for document in portfolio.contains_string(r'(?i)APPLE INC'):
 #     doc_type = document.type
@@ -233,7 +236,8 @@ for index, row in apollo_lead_df.iterrows():
         continue
 
     print(f"Matched: Closest: {closest_match} | Original: {company_name} | CIK: {cik}")
-    aum = sum_issuer_value(closest_match)
+    clean_company_name = clean_string(closest_match)
+    aum = sum_issuer_value(clean_company_name)
 
     records.append({
         "random_uuid": random_uuid,
