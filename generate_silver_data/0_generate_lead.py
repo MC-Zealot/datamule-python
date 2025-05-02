@@ -18,6 +18,7 @@ import uuid
 from urllib.parse import urlparse
 import utils as ut
 from datamule import Portfolio, Config
+import xml.etree.ElementTree as ET
 
 nlp = spacy.load("en_core_web_sm")
 MAX_WORKERS = 1
@@ -93,6 +94,98 @@ def extract_funding_stage(form_d_text):
             return stage
     return "Unknown"
 
+def get_value_for_issuer(xml_string: str, issuer_name: str = "APPLE INC") -> str:
+    """
+    Parse the XML string and return the <value> for the given <nameOfIssuer>.
+
+    Parameters:
+        xml_string (str): The XML content as a string.
+        issuer_name (str): The name of the issuer to search for (default is "APPLE INC").
+
+    Returns:
+        str: The <value> of the first matching issuer, or None if not found.
+    """
+    ns = {'ns': 'http://www.sec.gov/edgar/document/thirteenf/informationtable'}
+    root = ET.fromstring(xml_string)
+
+    for info in root.findall("ns:infoTable", ns):
+        name = info.find("ns:nameOfIssuer", ns).text.strip()
+        if name.upper() == issuer_name.upper():
+            value = info.find("ns:value", ns).text
+            return value  # Return the first match
+
+    return None
+
+portfolio_path_13F_HR_path = "/Users/zealot/Documents/SEC_13F-HR/portfolio_output_dir"
+
+portfolio = Portfolio(portfolio_path_13F_HR_path)
+
+
+def sum_issuer_value(text_query: str) -> int:
+    """
+    Search documents for a text query, filter by issuer name, and return the sum of <value> fields.
+
+    Parameters:
+        text_query (str): The string to search for in each document.
+        issuer_name (str): The issuer name to look for in the XML content.
+
+    Returns:
+        int: The sum of <value> fields for matching documents.
+    """
+
+    def callback_function(document):
+        try:
+            if document.contains_string(text_query):
+                return document.content
+        except Exception as e:
+            print(f"Error processing document: {e}")
+        return None
+
+    # Run the document processing with the callback
+    ret = portfolio.process_documents(callback=callback_function)
+
+    # Filter out None results
+    filtered_ret = [item for item in ret if item is not None]
+
+    total = 0
+    for i, item in enumerate(filtered_ret):
+        try:
+            value = get_value_for_issuer(item, issuer_name=text_query)
+            if value is not None:
+                total += int(value)
+                # print(f"[{i}] Value for {text_query}:", value)
+        except Exception as e:
+            print(f"[{i}] Error processing item: {e}")
+
+    return total
+
+
+
+
+# def callback_function(document):
+#     try:
+#         if document.contains_string(text_query):
+#             return document.content
+#     except Exception as e:
+#         print(f"Error processing document: {e}")
+#
+# # Process submissions - note that filters are applied here
+# ret = portfolio.process_documents(callback=callback_function)
+# filtered_ret = [item for item in ret if item is not None]
+#
+# print(len(filtered_ret))
+
+# sum=0
+# for i, item in enumerate(filtered_ret):
+#     if item is not None:
+#         try:
+#             value = get_value_for_issuer(item, issuer_name="APPLE INC")
+#             if value is not None:
+#                 sum+= int(value)
+#                 print(f"[{i}] Value for APPLE INC:", value)
+#         except Exception as e:
+#             print(f"[{i}] Error processing item: {e}")
+
 
 # Step 1: Read the CSV file
 csv_file_path = 'generate_silver_data/apollo-contacts-export.csv'
@@ -129,6 +222,7 @@ for index, row in apollo_lead_df.iterrows():
     # mobile_phone = row['Mobile Phone']
     phone_number = row['Corporate Phone']
 
+    text_query = "APPLE INC"
     # prompt = f"Give a one-line description of the company named '{company_name}'."
     # print("job_title_category: ", job_title_category)
     # print("company_domain: ", company_domain)
@@ -139,6 +233,7 @@ for index, row in apollo_lead_df.iterrows():
         continue
 
     print(f"Matched: Closest: {closest_match} | Original: {company_name} | CIK: {cik}")
+    aum = sum_issuer_value(text_query)
     # get form d
     # gpt_summary = call_chatgpt(prompt)
 
