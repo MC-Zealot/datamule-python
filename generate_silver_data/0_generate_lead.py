@@ -17,6 +17,7 @@ pd.set_option('display.width', 2000)
 import uuid
 from urllib.parse import urlparse
 import utils as ut
+from datamule import Portfolio, Config
 
 nlp = spacy.load("en_core_web_sm")
 MAX_WORKERS = 1
@@ -100,6 +101,14 @@ cik_mapping = ut.fetch_cik_mapping()
 # Step 2: Display the loaded data
 print("Data read from CSV:")
 print(apollo_lead_df.head())  # Print only the first 5 rows to quickly check the content
+
+portfolio_path_13F_HR_path = ""
+
+portfolio = Portfolio(portfolio_path_13F_HR_path)
+for document in portfolio.contains_string(r'(?i)APPLE INC'):
+    doc_type = document.type
+
+
 
 for index, row in apollo_lead_df.iterrows():
     random_uuid = uuid.uuid4()
