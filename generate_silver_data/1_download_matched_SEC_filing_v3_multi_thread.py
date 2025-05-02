@@ -18,7 +18,12 @@ SEC_HEADERS = {
 }
 SEC_CIK_MAPPING_URL = "https://www.sec.gov/files/company_tickers.json"
 LIST1_CSV_FILE_PATH = "generate_silver_data/apollo-contacts-export.csv"
-output_dir_base = "/Users/zealot/Documents/SEC_D"
+submission_type = "10-K"
+submission_type = "8-K"
+submission_type = "D"
+submission_type = ["13F-HR"]
+# submission_type = "ADV"
+output_dir_base = "/Users/zealot/Documents/SEC_"+str(submission_type)
 MAX_WORKERS = 6
 MAX_DOWNLOADS = 1000
 
@@ -31,8 +36,9 @@ def download_sec_filings(cik: str, company_ticker: str, submission_type: str = "
     portfolio_path=f"{output_dir_base}/output_dir/{cik}_{company_ticker}"
     print("portfolio_path: ", portfolio_path)
     portfolio = Portfolio(portfolio_path)
-    portfolio.download_submissions(submission_type=[submission_type], cik=cik)
-    # portfolio.download_submissions(submission_type=[submission_type])
+    # portfolio.download_submissions(submission_type=[submission_type], cik=cik)
+    # portfolio.download_submissions(submission_type=[submission_type], cik=cik)
+    portfolio.download_submissions(submission_type=[submission_type])
 
     for doc in portfolio.document_type(submission_type):
         try:
@@ -46,6 +52,76 @@ def download_sec_filings(cik: str, company_ticker: str, submission_type: str = "
             print(f"Failed to parse document for CIK {cik}: {e}")
 
 
+def download_sec_filings_13f(submission_type: str = "10-K", filing_date=('2023-01-01', '2023-01-03')):
+    if isinstance(submission_type, str):
+        submission_type = [submission_type]  # transform to list
+
+    date_range_str = f"{filing_date[0]}_to_{filing_date[1]}"
+    output_dir = f"{output_dir_base}/output/result_{submission_type}_{date_range_str}"
+    print("output_dir:", output_dir)
+    os.makedirs(output_dir, exist_ok=True)
+
+    portfolio_path = f"{output_dir_base}/portfolio_output_dir"
+    print("portfolio_path:", portfolio_path)
+
+    portfolio = Portfolio(portfolio_path)
+
+    # download sec data
+    portfolio.download_submissions(submission_type=[submission_type], filing_date=filing_date)
+
+    for doc in portfolio.document_type(submission_type):
+        try:
+            doc.parse()
+            filing_date_val = doc.filing_date
+            output_file = os.path.join(output_dir, f"{filing_date_val}.json")
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json_string = json.dumps(doc.data, ensure_ascii=False, indent=4)
+                f.write(json_string + "\n\n")
+        except Exception as e:
+            print(f"Failed to parse document: {e}")
+
+
+def download_sec_filings_v2(
+    cik: str,
+    company_ticker: str,
+    submission_type: "10-K",
+    filing_date=('2023-01-01', '2023-01-03')
+):
+    """Download and save SEC filings for a given CIK and company ticker, with date range support."""
+
+    if isinstance(submission_type, str):
+        submission_type = [submission_type]  # transform to list
+
+    for sub_type in submission_type:
+        date_range_str = f"{filing_date[0]}_to_{filing_date[1]}"
+        output_dir = f"{output_dir_base}/output/result_{sub_type}_{cik}_{company_ticker}_{date_range_str}"
+        print("output_dir:", output_dir)
+        os.makedirs(output_dir, exist_ok=True)
+
+        portfolio_path = f"{output_dir_base}/portfolio_output_dir/{cik}_{company_ticker}"
+        print("portfolio_path:", portfolio_path)
+
+        portfolio = Portfolio(portfolio_path)
+
+        # download sec data
+        if sub_type =='13F-HR':
+            portfolio.download_submissions(submission_type=[sub_type], filing_date=filing_date)
+        else:
+            portfolio.download_submissions(submission_type=[sub_type], cik=cik, filing_date=filing_date)
+
+        for doc in portfolio.document_type(sub_type):
+            try:
+                doc.parse()
+                filing_date_val = doc.filing_date
+                output_file = os.path.join(output_dir, f"{filing_date_val}.json")
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    json_string = json.dumps(doc.data, ensure_ascii=False, indent=4)
+                    f.write(json_string + "\n\n")
+            except Exception as e:
+                print(f"Failed to parse document for CIK {cik}: {e}")
+
+
+
 def main(csv_path: str, max_downloads: int = 1):
     cik_mapping = ut.fetch_cik_mapping()
     list1_df = pd.read_csv(csv_path)
@@ -53,25 +129,26 @@ def main(csv_path: str, max_downloads: int = 1):
 
     download_tasks = []
     download_count = 0
+
     with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        for company_name in company_list:
-            if download_count >= max_downloads:
-                break
-
-            closest_match, cik = ut.find_closest_cik(company_name, cik_mapping)
-            if cik is None:
-                print(f"Not found CIK: {company_name}")
-                continue
-
-            print(f"Matched: Closest: {closest_match} | Original: {company_name} | CIK: {cik}")
-            submission_type = "10-K"
-            submission_type = "8-K"
-            submission_type = "D"
-            # submission_type = "13F-HR"
-            # submission_type = "ADV"
-            future = executor.submit(download_sec_filings, cik, company_name + "_" + closest_match, submission_type)
+        if '13F-HR' in submission_type:
+            future = executor.submit(download_sec_filings_v2, submission_type)
             download_tasks.append(future)
-            download_count += 1
+        else:
+            for company_name in company_list:
+                if download_count >= max_downloads:
+                    break
+
+                closest_match, cik = ut.find_closest_cik(company_name, cik_mapping)
+                if cik is None:
+                    print(f"Not found CIK: {company_name}")
+                    continue
+
+                print(f"Matched: Closest: {closest_match} | Original: {company_name} | CIK: {cik}")
+
+                future = executor.submit(download_sec_filings_v2, cik, company_name + "_" + closest_match, submission_type)
+                download_tasks.append(future)
+                download_count += 1
 
         for future in as_completed(download_tasks):
             try:
