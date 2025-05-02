@@ -24,7 +24,7 @@ submission_type = "D"
 submission_type = ["13F-HR"]
 # submission_type = "ADV"
 output_dir_base = "/Users/zealot/Documents/SEC_"+str(submission_type)
-MAX_WORKERS = 6
+MAX_WORKERS = 1
 MAX_DOWNLOADS = 1000
 
 
@@ -52,7 +52,7 @@ def download_sec_filings(cik: str, company_ticker: str, submission_type: str = "
             print(f"Failed to parse document for CIK {cik}: {e}")
 
 
-def download_sec_filings_13f(submission_type: str = "10-K", filing_date=('2024-01-01', '2024-03-31')):
+def download_sec_filings_13f(submission_type, filing_date=('2024-01-01', '2024-03-31')):
 
     date_range_str = f"{filing_date[0]}_to_{filing_date[1]}"
     output_dir = f"{output_dir_base}/output/result_{submission_type}_{date_range_str}"
@@ -130,7 +130,7 @@ def main(csv_path: str, max_downloads: int = 1):
 
     with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
         if '13F-HR' in submission_type:
-            future = executor.submit(download_sec_filings_13f(), '13F-HR')
+            future = executor.submit(download_sec_filings_13f, submission_type='13F-HR')
             download_tasks.append(future)
         else:
             for company_name in company_list:
