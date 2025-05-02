@@ -66,7 +66,7 @@ def download_sec_filings_13f(submission_type, filing_date=('2024-01-01', '2024-0
     portfolio = Portfolio(portfolio_path)
 
     # download sec data
-    portfolio.download_submissions(submission_type=submission_type, filing_date=filing_date)
+    portfolio.download_submissions(submission_type=[submission_type], filing_date=filing_date)
 
     for doc in portfolio.document_type(submission_type):
         try:
@@ -103,10 +103,7 @@ def download_sec_filings_v2(
         portfolio = Portfolio(portfolio_path)
 
         # download sec data
-        if sub_type =='13F-HR':
-            portfolio.download_submissions(submission_type=[sub_type], filing_date=filing_date)
-        else:
-            portfolio.download_submissions(submission_type=[sub_type], cik=cik, filing_date=filing_date)
+        portfolio.download_submissions(submission_type=[sub_type], cik=cik, filing_date=filing_date)
 
         for doc in portfolio.document_type(sub_type):
             try:
