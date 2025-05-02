@@ -198,10 +198,10 @@ print(apollo_lead_df.head())  # Print only the first 5 rows to quickly check the
 portfolio_path_13F_HR_path = ""
 
 portfolio = Portfolio(portfolio_path_13F_HR_path)
-for document in portfolio.contains_string(r'(?i)APPLE INC'):
-    doc_type = document.type
+# for document in portfolio.contains_string(r'(?i)APPLE INC'):
+#     doc_type = document.type
 
-
+records = []
 
 for index, row in apollo_lead_df.iterrows():
     random_uuid = uuid.uuid4()
@@ -233,7 +233,30 @@ for index, row in apollo_lead_df.iterrows():
         continue
 
     print(f"Matched: Closest: {closest_match} | Original: {company_name} | CIK: {cik}")
-    aum = sum_issuer_value(text_query)
+    aum = sum_issuer_value(closest_match)
+
+    records.append({
+        "random_uuid": random_uuid,
+        "first_name": first_name,
+        "last_name": last_name,
+        "full_name": full_name,
+        "title": title,
+        "job_title_category": job_title_category,
+        "company_name": company_name,
+        "website": website,
+        "company_domain": company_domain,
+        "company_email_name": company_email_name,
+        "email": email,
+        "person_linkedin_url": person_linkedin_url,
+        "company_linkedin_url": company_linkedin_url,
+        "phone_number": phone_number,
+        "aum": aum
+    })
+
+df = pd.DataFrame(records)
+
+# Show the result
+print(df.head())
     # get form d
     # gpt_summary = call_chatgpt(prompt)
 
