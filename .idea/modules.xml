@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../data_research/.idea/data_research.iml" filepath="$PROJECT_DIR$/../data_research/.idea/data_research.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/datamule-python.iml" filepath="$PROJECT_DIR$/.idea/datamule-python.iml" />
     </modules>
   </component>

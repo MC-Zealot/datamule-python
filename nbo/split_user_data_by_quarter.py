@@ -43,7 +43,7 @@ if not unmatched_df3.empty:
 # df3.to_csv("/Users/zealot/Downloads/ft/updated_test3.csv", index=False)
 
 # Step 4: Split all 3 files by quarter
-output_dir = "/Users/zealot/Downloads/ft/split_all_by_quarter"
+output_dir = "/Users/zealot/Downloads/ft/split_all_by_quarter2"
 os.makedirs(output_dir, exist_ok=True)
 
 quarters = sorted(set(df1["included_quarters"].dropna()))
